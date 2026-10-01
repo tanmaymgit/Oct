@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Ishika ❤️ - October Magic</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0202; /* Deep romantic dark background */
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; /* Canvas full screen */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Canvas Background */
+        #treeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute;
+            top: 5vh;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .heading {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4.5rem;
+            color: #ffa3a3;
+            text-shadow: 0 0 20px rgba(255, 100, 100, 0.8);
+            margin: 0;
+            animation: glow 2s infinite alternate;
+            text-align: center;
+        }
+
+        .sub-heading {
+            font-size: 1.5rem;
+            color: #ffd1d1;
+            margin: 10px 0 40px;
+        }
+        
+        .sub-heading span {
+            color: #ff4d4d;
+            font-weight: 600;
+            font-size: 2rem;
+            text-shadow: 0 0 15px #ff4d4d;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #ff6666; }
+            to { text-shadow: 0 0 25px #ff1a1a, 0 0 10px #fff; }
+        }
+
+        /* Counter */
+        .counter-container {
+            background: rgba(20, 0, 0, 0.4);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            border-radius: 20px;
+            padding: 20px 40px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 30px rgba(255, 50, 50, 0.2);
+            text-align: center;
+        }
+
+        .counter-container h3 {
+            margin: 0 0 15px 0;
+            color: #ffcccc;
+            font-weight: 300;
+            font-size: 1.1rem;
+        }
+
+        .timer {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .time-box {
+            text-align: center;
+        }
+
+        .time-box span {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #ff4d4d;
+            text-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+            display: block;
+        }
+
+        .time-box p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #ffb3b3;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Interactive Seed Element */
+        #seed-container {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            text-align: center;
+            cursor: pointer;
+            transition: all 1s cubic-bezier(0.5, 0, 1, 1);
+        }
+
+        #seed-container h4 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            color: #ffcccc;
+            margin-bottom: 10px;
+            animation: pulseText 1.5s infinite;
+        }
+
+        .heart-seed {
+            font-size: 5rem;
+            animation: heartbeat 1s infinite;
+            filter: drop-shadow(0 0 20px #ff0055);
+        }
+
+        /* Classes for drop animation */
+        #seed-container.dropped {
+            top: 100%;
+            transform: translate(-50%, -100%) scale(0.3);
+            opacity: 0;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @media (max-width: 700px) {
+            .heading { font-size: 3rem; }
+            .timer { gap: 15px; }
+            .time-box span { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- UI Overlay (Text & Counter) -->
+    <div id="ui-layer">
+        <h1 class="heading">I fell in love in October</h1>
+        <p class="sub-heading">And it's only been magical with <span>Ishika</span> ❤️</p>
+
+        <div class="counter-container">
+            <h3>Our beautiful time since Oct 1, 2026</h3>
+            <div class="timer">
+                <div class="time-box"><span id="days">00</span><p>Days</p></div>
+                <div class="time-box"><span id="hours">00</span><p>Hours</p></div>
+                <div class="time-box"><span id="minutes">00</span><p>Mins</p></div>
+                <div class="time-box"><span id="seconds">00</span><p>Secs</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Seed -->
+    <div id="seed-container">
+        <h4>Tap the heart 🌱</h4>
+        <div class="heart-seed">❤️</div>
+    </div>
+
+    <!-- The Magical Canvas -->
+    <canvas id="treeCanvas"></canvas>
+
+    <script>
+        // --- 1. COUNTER LOGIC ---
+        const startDate = new Date("October 1, 2026 00:00:00").getTime();
+        
+        function updateCounter() {
+            const now = new Date().getTime();
+            const diff = now - startDate;
+            
+            if (diff < 0) return;
+
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerText = d.toString().padStart(2, '0');
+            document.getElementById("hours").innerText = h.toString().padStart(2, '0');
+            document.getElementById("minutes").innerText = m.toString().padStart(2, '0');
+            document.getElementById("seconds").innerText = s.toString().padStart(2, '0');
+        }
+        setInterval(updateCounter, 1000);
+        updateCounter();
+
+        // --- 2. CANVAS FRACTAL TREE LOGIC ---
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Canvas Full Screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Resize fix so it doesn't break if phone rotates
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        let activeBranches = [];
+        let bloomingHearts = [];
+        let animationRunning = false;
+
+        class Branch {
+            constructor(x, y, angle, length, depth, width) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.length = length;
+                this.depth = depth;
+                this.width = width;
+                this.progress = 0;
+                this.speed = 0.03 + Math.random() * 0.02;
+                this.finished = false;
+                this.color = `rgba(102, 34, 17, ${0.5 + (this.depth / 20)})`; 
+            }
+
+            draw() {
+                if (this.finished) return;
+
+                let startX = this.x + Math.cos(this.angle) * (this.length * this.progress);
+                let startY = this.y + Math.sin(this.angle) * (this.length * this.progress);
+
+                this.progress += this.speed;
+                if (this.progress >= 1) {
+                    this.progress = 1;
+                    this.finished = true;
+                }
+
+                let endX = this.x + Math.cos(this.angle) * (this.length * this.progress);
+                let endY = this.y + Math.sin(this.angle) * (this.length * this.progress);
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.lineWidth = this.width;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+            }
+
+            spawn() {
+                let newBranches = [];
+                if (this.depth > 0) {
+                    let endX = this.x + Math.cos(this.angle) * this.length;
+                    let endY = this.y + Math.sin(this.angle) * this.length;
+
+                    // PERFECT SPREAD LOGIC: 
+                    // 1. Force Left Branch
+                    let angleLeft = this.angle - (0.35 + Math.random() * 0.3); // -20 to -37 degrees
+                    let lengthLeft = this.length * (0.75 + Math.random() * 0.1); // slightly smaller
+                    newBranches.push(new Branch(endX, endY, angleLeft, lengthLeft, this.depth - 1, this.width * 0.7));
+
+                    // 2. Force Right Branch
+                    let angleRight = this.angle + (0.35 + Math.random() * 0.3); // +20 to +37 degrees
+                    let lengthRight = this.length * (0.75 + Math.random() * 0.1); 
+                    newBranches.push(new Branch(endX, endY, angleRight, lengthRight, this.depth - 1, this.width * 0.7));
+
+                    // 3. Center Branch (30% chance) to make the tree look dense in the middle
+                    if (Math.random() > 0.7) {
+                        let angleCenter = this.angle + (Math.random() - 0.5) * 0.2; // roughly straight
+                        let lengthCenter = this.length * (0.6 + Math.random() * 0.2); // shorter length
+                        newBranches.push(new Branch(endX, endY, angleCenter, lengthCenter, this.depth - 1, this.width * 0.7));
+                    }
+                } else {
+                    let endX = this.x + Math.cos(this.angle) * this.length;
+                    let endY = this.y + Math.sin(this.angle) * this.length;
+                    bloomingHearts.push(new BloomingHeart(endX, endY));
+                }
+                return newBranches;
+            }
+        }
+
+        class BloomingHeart {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 0;
+                this.targetSize = 10 + Math.random() * 15;
+                this.finished = false;
+                
+                const heartTypes = ['❤️', '💖', '💗', '💕'];
+                this.emoji = heartTypes[Math.floor(Math.random() * heartTypes.length)];
+            }
+
+            draw() {
+                if (this.finished) return;
+                
+                this.size += 0.6; // Speed of blooming
+                if (this.size >= this.targetSize) {
+                    this.size = this.targetSize;
+                    this.finished = true;
+                }
+
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 10;
+                ctx.fillText(this.emoji, this.x, this.y);
+                ctx.shadowBlur = 0; 
+            }
+        }
+
+        function renderTree() {
+            if (!animationRunning) return;
+            requestAnimationFrame(renderTree);
+
+            let nextGeneration = [];
+            for (let b of activeBranches) {
+                b.draw();
+                if (b.finished) {
+                    nextGeneration = nextGeneration.concat(b.spawn());
+                }
+            }
+            
+            activeBranches = activeBranches.filter(b => !b.finished).concat(nextGeneration);
+
+            for (let h of bloomingHearts) {
+                h.draw();
+            }
+            bloomingHearts = bloomingHearts.filter(h => !h.finished);
+        }
+
+        // --- 3. TRIGGER EVENT ---
+        const seedContainer = document.getElementById('seed-container');
+        let isStarted = false;
+
+        seedContainer.addEventListener('click', function() {
+            if (isStarted) return;
+            isStarted = true;
+
+            // Heart drops
+            this.classList.add('dropped');
+
+            setTimeout(() => {
+                this.style.display = 'none'; 
+                animationRunning = true;
+                
+                let startLength = window.innerHeight * 0.20; // First trunk height
+                activeBranches.push(new Branch(
+                    window.innerWidth / 2, 
+                    window.innerHeight, 
+                    -Math.PI / 2, // Exactly 90 degrees UP
+                    startLength, 
+                    8, // Depth (Number of branching generations - creates 250+ leaves)
+                    18 // Base Width
+                ));
+                
+                renderTree();
+                
+            }, 900); 
+        });
+    </script>
+</body>
+</html>
